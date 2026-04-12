@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h1 class="mb-4">Admin Dashboard</h1>
+<div class="row g-3 mb-4">
+  <div class="col-md-2"><div class="metric-card"><div class="metric-value">{{ user_count }}</div><div class="metric-label">Users</div></div></div>
+  <div class="col-md-2"><div class="metric-card"><div class="metric-value">{{ patient_count }}</div><div class="metric-label">Patients</div></div></div>
+  <div class="col-md-2"><div class="metric-card"><div class="metric-value">{{ clinician_count }}</div><div class="metric-label">Clinicians</div></div></div>
+  <div class="col-md-2"><div class="metric-card"><div class="metric-value">{{ session_count }}</div><div class="metric-label">Sessions</div></div></div>
+  <div class="col-md-2"><div class="metric-card"><div class="metric-value">{{ frame_count }}</div><div class="metric-label">Frames</div></div></div>
+  <div class="col-md-2"><div class="metric-card"><div class="metric-value">{{ alert_count }}</div><div class="metric-label">Alerts</div></div></div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <h4>Latest imported sessions</h4>
+    <table class="table">
+      <thead><tr><th>Patient</th><th>File</th><th>Date</th><th>Frames</th></tr></thead>
+      <tbody>
+        {% for session in latest_sessions %}
+        <tr><td>{{ session.patient.user.username }}</td><td>{{ session.source_file }}</td><td>{{ session.session_date }}</td><td>{{ session.frame_count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="mb-0 text-muted">Use Django admin for creating additional accounts and updates.</p>
+  </div>
+</div>
+{% endblock %}

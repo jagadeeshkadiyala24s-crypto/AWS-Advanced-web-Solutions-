@@ -1,0 +1,26 @@
+body { background: #f7f9fc; }
+.metric-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 0.25rem 1rem rgba(0,0,0,.06);
+  height: 100%;
+}
+.metric-value { font-size: 1.75rem; font-weight: 700; }
+.metric-label { color: #6c757d; }
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(32, 12px);
+  gap: 2px;
+  justify-content: start;
+}
+.heat-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: rgba(0,0,0,.05);
+}
+.comment-block {
+  padding: .85rem 0;
+  border-bottom: 1px solid #e9ecef;
+}

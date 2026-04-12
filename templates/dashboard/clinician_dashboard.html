@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Clinician Dashboard{% endblock %}
+{% block content %}
+<h1 class="mb-4">Clinician Dashboard</h1>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-body">
+        <h4>Your patients</h4>
+        <ul class="list-group list-group-flush">
+          {% for patient in patients %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold">{{ patient.user.username }}</div>
+                <small class="text-muted">External ID: {{ patient.external_id }}</small>
+              </div>
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:clinician_patient_detail' patient.id %}">Review</a>
+            </li>
+          {% empty %}
+            <li class="list-group-item">No patients assigned.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h4>Recent alerts</h4>
+        <table class="table table-sm">
+          <thead><tr><th>Patient</th><th>Time</th><th>Level</th><th>Message</th></tr></thead>
+          <tbody>
+            {% for alert in alerts %}
+              <tr><td>{{ alert.patient.user.username }}</td><td>{{ alert.frame.recorded_at }}</td><td>{{ alert.level }}</td><td>{{ alert.message }}</td></tr>
+            {% empty %}
+              <tr><td colspan="4">No alerts.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h4>Recent patient comments</h4>
+        {% for comment in recent_comments %}
+          <div class="border rounded p-3 mb-3">
+            <div class="small text-muted">{{ comment.frame.session.patient.user.username }} · {{ comment.created_at }}</div>
+            <div>{{ comment.message }}</div>
+          </div>
+        {% empty %}
+          <p class="mb-0">No recent comments.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

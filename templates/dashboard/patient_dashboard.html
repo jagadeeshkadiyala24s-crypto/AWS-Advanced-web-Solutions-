@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}Patient Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="mb-0">Patient Dashboard</h1>
+    <p class="text-muted mb-0">{{ patient.user.username }} · {{ patient.external_id }}</p>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-outline-primary {% if period == '1h' %}active{% endif %}" href="?period=1h">1h</a>
+    <a class="btn btn-outline-primary {% if period == '6h' %}active{% endif %}" href="?period=6h">6h</a>
+    <a class="btn btn-outline-primary {% if period == '24h' %}active{% endif %}" href="?period=24h">24h</a>
+    <a class="btn btn-outline-primary {% if period == 'all' %}active{% endif %}" href="?period=all">All</a>
+  </div>
+</div>
+{% if selected_frame %}
+<div class="row g-4 mb-4">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Pressure heatmap</h4>
+          <select class="form-select w-auto" onchange="location.href='?period={{ period }}&frame=' + this.value">
+            {% for frame in frame_options %}
+              <option value="{{ frame.id }}" {% if selected_frame.id == frame.id %}selected{% endif %}>{{ frame.recorded_at }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="heatmap" class="heatmap-grid mb-3"></div>
+        <p class="mb-1"><strong>What this means:</strong> {{ selected_frame.plain_english_summary }}</p>
+        <small class="text-muted">Timestamp: {{ selected_frame.recorded_at }}</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="row g-3">
+      <div class="col-6"><div class="metric-card"><div class="metric-value">{{ selected_frame.peak_pressure_index|floatformat:1 }}</div><div class="metric-label">Peak Pressure Index</div></div></div>
+      <div class="col-6"><div class="metric-card"><div class="metric-value">{{ selected_frame.contact_area_percent|floatformat:1 }}%</div><div class="metric-label">Contact Area</div></div></div>
+      <div class="col-6"><div class="metric-card"><div class="metric-value">{{ selected_frame.occupied_pixels }}</div><div class="metric-label">Occupied Pixels</div></div></div>
+      <div class="col-6"><div class="metric-card"><div class="metric-value">{{ selected_frame.high_pressure_regions|length }}</div><div class="metric-label">High-Pressure Regions</div></div></div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-body">
+        <h5>Recent alerts</h5>
+        {% for alert in alerts %}
+          <div class="alert alert-{% if alert.level == 'critical' %}danger{% else %}warning{% endif %} py-2 mb-2">
+            <div class="fw-semibold text-capitalize">{{ alert.level }}</div>
+            <div>{{ alert.message }}</div>
+          </div>
+        {% empty %}
+          <p class="mb-0">No alerts in this dataset.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card mb-4">
+  <div class="card-body">
+    <h4>Trends over time</h4>
+    <canvas id="trendChart" height="100"></canvas>
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card h-100"><div class="card-body">
+      <h4>Add comment for this timestamp</h4>
+      <form method="post" action="{% url 'dashboard:add_frame_comment' selected_frame.id %}">
+        {% csrf_token %}
+        {{ comment_form.message }}
+        <button class="btn btn-primary mt-2">Save comment</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100"><div class="card-body">
+      <h4>Comment thread</h4>
+      {% for comment in top_comments %}
+        <div class="comment-block">
+          <div class="small text-muted">{{ comment.author.username }} · {{ comment.created_at }}</div>
+          <div>{{ comment.message }}</div>
+          {% for reply in comment.replies.all %}
+            <div class="ms-4 p-2 border-start border-3 mt-2">
+              <div class="small text-muted">{{ reply.author.username }} · {{ reply.created_at }}</div>
+              <div>{{ reply.message }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% empty %}
+        <p class="mb-0">No comments for this timestamp yet.</p>
+      {% endfor %}
+    </div></div>
+  </div>
+</div>
+{% else %}
+<p>No frames available yet. Run the importer first.</p>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+{% if selected_frame %}
+<script>
+  const matrix = {{ selected_frame.matrix_json|safe }};
+  const heatmap = document.getElementById('heatmap');
+  function colorFor(value) {
+    const alpha = Math.min(1, value / 180);
+    return `rgba(13, 110, 253, ${alpha})`;
+  }
+  matrix.flat().forEach(v => {
+    const cell = document.createElement('div');
+    cell.className = 'heat-cell';
+    cell.style.backgroundColor = colorFor(v);
+    cell.title = v;
+    heatmap.appendChild(cell);
+  });
+
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels|safe }},
+      datasets: [
+        {label: 'Peak Pressure Index', data: {{ ppi_data|safe }}, borderWidth: 2, tension: 0.2},
+        {label: 'Contact Area %', data: {{ contact_area_data|safe }}, borderWidth: 2, tension: 0.2}
+      ]
+    },
+    options: {responsive: true, maintainAspectRatio: true, scales: {x: {display: false}}}
+  });
+</script>
+{% endif %}
+{% endblock %}
